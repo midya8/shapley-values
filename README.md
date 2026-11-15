@@ -11,8 +11,10 @@ it provides a scalar callback API and a strict JSON CLI. No model training or pa
 - Atomic groups: switch a whole supplied group at once and assign one share per group.
 - Two-level Owen: keep group members contiguous in arrival orders, then assign member shares.
 - Permutation sampling: approximate the individual-feature allocation with seeded random orders.
+- Rational interaction decomposition: split a supplied full game into signed dividends, then inspect each dividend's ordinary and two-level Owen member contributions. No extra model calls.
 
-All four use the declared reference background. They answer different allocation
+The first four use the declared reference background. The rational decomposition accepts
+a supplied coalition table; it does not evaluate or authenticate a reference game. They answer different allocation
 questions, not causal ones. The ledger and Owen browser inspectors retain their
 separate bounds.
 
@@ -320,3 +322,57 @@ evidence, not authentication or a global error bound.
 
 [Read the complete method, limits, source ledger and reproduction](OWEN.md).
 The original exact/grouped/sampled ledger, its commands and API remain intact.
+
+## Rational interaction decomposition
+
+The Owen coefficient engine and permutation checker now have a separate Python
+API for inspecting *which finite-game interactions* produce each share. It uses
+integer/rational arithmetic and no allocation-engine or ordering-enumeration calls.
+
+```python
+from shapleylab.dividends import decompose_game
+
+report = decompose_game(
+    [0, 0, 0, 0, 0, 0, 0, 1], list("abc"),
+    [{"name": "ab", "features": [0, 1]}, {"name": "c", "features": [2]}],
+)
+assert report["owen_attributions"] == [
+    {"numerator": "1", "denominator": "4"},
+    {"numerator": "1", "denominator": "4"},
+    {"numerator": "1", "denominator": "2"},
+]
+```
+
+For each nonempty support T, the dividend is
+`d(T) = v(T) - sum(d(U) for proper subsets U of T)`, with `d(empty)=v(empty)`.
+Thus `v(S)=sum(d(T) for T subset S)`. A dividend is the coefficient of the
+unanimity game that pays one when every member of T is present. Ordinary
+Shapley gives each active member `d(T)/len(T)`. For two-level Owen, let m be
+the number of groups touched by T and t the active members in that member's
+group. Its contribution is `d(T)/(m*t)`: that group must arrive last among
+the touched groups, then the member last among its active group members.
+Summing these contributions gives the allocation. This is an alternate
+calculation of the established values, not a new allocation convention.
+
+The report retains every nonempty support, including zero dividends, its
+member contributions under both conventions, group sums, the baseline, every
+reconstructed coalition value and exact reconstruction/efficiency residuals.
+There are 1-8 features, at most 255 nonempty supports and no model calls.
+Inputs are finite Python floats or integers of at most 1024 bits. Rational
+numerators and positive denominators are decimal strings so JSON consumers do
+not round large integers. No new CLI or browser mode is added.
+
+Exact means exact for the supplied numbers. `0.1` is its stored binary float,
+not exactly 1/10; this cannot recover earlier score/sigmoid/background rounding.
+Dividends can cancel and need not be positive. They describe the declared
+coalition game, not statistical feature interactions, causal effects, meaningful
+groups or valid hybrid inputs. The existing float APIs and tolerances are unchanged.
+
+Four new tests bring the Python suite to 76. They cover 556 signed dyadic
+game/partition cases through six features against 50,362 independently enumerated
+block-contiguous orders, direct inclusion/exclusion dividends, all 12 original
+Owen controls, eight-feature boundaries, subnormal and extreme finite inputs,
+strict validation, relabeling and input isolation. The existing coefficient engine
+and permutation checker remain independent checks; this API does not replace
+either. Installed-wheel checks exercise all 12 rational decompositions outside
+the checkout. These are finite implementation checks, not a proof of every input.
