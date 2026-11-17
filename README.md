@@ -1,6 +1,6 @@
 # Shapley values
 
-ShapleyLab computes feature credit for small, declared background-replacement
+This implementation computes feature credit for small, declared background-replacement
 games. Inspect every coalition, hybrid input and marginal contribution in Python
 or the browser. The Python runtime has no dependencies and needs Python 3.10+;
 it provides a scalar callback API and a strict JSON CLI. No model training or paid APIs.
@@ -145,7 +145,7 @@ receives prediction minus baseline. Group ordering changes output order only.
 
 Source for the grouping concept and distinction from post-grouped sums:
 [Jullum, Redelmeier and Aas, groupShapley (2021)](https://ar5iv.labs.arxiv.org/html/2106.12228).
-ShapleyLab retains its declared empirical replacement contribution function;
+This implementation retains its declared empirical replacement contribution function;
 it does not implement that paper's conditional-distribution estimation or claim
 new grouping theory.
 
