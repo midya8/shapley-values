@@ -1,4 +1,4 @@
-# ShapleyLab
+# Shapley values
 
 ShapleyLab computes feature credit for small, declared background-replacement
 games. Inspect every coalition, hybrid input and marginal contribution in Python
